@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Our Family World Map</title>
+    <meta
+      name="description"
+      content="Highlight countries our family is from and has visited. Single-file, easy to publish."
+    />
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #111831;
+        --text: #eaf0ff;
+        --muted: #a7b0c4;
+        --stroke: #637199;
+        --land: #1b2445;
+        --hover: #27305b;
+        --origin: #8b5cf6; /* violet */
+        --visited: #10b981; /* emerald */
+        --both: #f59e0b; /* amber */
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Ubuntu, Cantarell, Noto Sans, sans-serif;
+        color: var(--text);
+        background: radial-gradient(
+          1600px 800px at 10% -10%,
+          #14204b 0%,
+          var(--bg) 50%
+        );
+      }
+      header {
+        padding: 20px 16px 8px;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(20px, 2.8vw, 34px);
+        font-weight: 800;
+        letter-spacing: 0.2px;
+      }
+      p.subtitle {
+        margin: 0.5rem auto 0;
+        max-width: 800px;
+        color: var(--muted);
+      }
+
+      .wrap {
+        max-width: 1100px;
+        margin: 16px auto 40px;
+        padding: 0 12px;
+      }
+
+      .panel {
+        background: linear-gradient(180deg, var(--panel), #0e1630);
+        border: 1px solid rgba(157, 169, 203, 0.18);
+        box-shadow: 0 10px 30px rgba(8, 12, 30, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        border-radius: 20px;
+        overflow: hidden;
+      }
+      .controls {
+        display: grid;
+        gap: 12px;
+        padding: 12px;
+        align-items: center;
+        border-bottom: 1px solid rgba(157, 169, 203, 0.18);
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 860px) {
+        .controls {
+          grid-template-columns: auto 1fr auto;
+        }
+      }
+
+      .mode {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .mode .label {
+        color: var(--muted);
+        font-size: 14px;
+        margin-right: 6px;
+      }
+      .seg {
+        display: flex;
+        background: #0b132b;
+        border: 1px solid rgba(157, 169, 203, 0.18);
+        border-radius: 12px;
+        padding: 4px;
+      }
+      .seg input {
+        display: none;
+      }
+      .seg label {
+        user-select: none;
+        cursor: pointer;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-weight: 600;
+        font-size: 14px;
+        opacity: 0.85;
+      }
+      .seg label:hover {
+        background: #0d1636;
+      }
+      .seg input:checked + label {
+        background: #0a1230;
+        outline: 2px solid rgba(157, 169, 203, 0.28);
+        opacity: 1;
+      }
+      .seg label[data-role="origin"] {
+        color: var(--origin);
+      }
+      .seg label[data-role="visited"] {
+        color: var(--visited);
+      }
+
+      .search {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .search input[type="text"] {
+        flex: 1 1 260px;
+        min-width: 200px;
+        background: #0b132b;
+        color: var(--text);
+        border: 1px solid rgba(157, 169, 203, 0.18);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      .btn {
+        appearance: none;
+        border: 1px solid rgba(157, 169, 203, 0.2);
+        color: var(--text);
+        background: #0c1532;
+        padding: 10px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 14px;
+        transition: 0.15s transform ease, 0.15s background ease,
+          0.15s border-color ease;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(157, 169, 203, 0.35);
+        background: #0e183a;
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+      .btn.secondary {
+        background: #0a122b;
+        color: var(--muted);
+      }
+
+      .legend {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .sw {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        display: inline-block;
+        margin-right: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+      }
+      .sw.o {
+        background: var(--origin);
+      }
+      .sw.v {
+        background: var(--visited);
+      }
+      .sw.b {
+        background: var(--both);
+      }
+
+      .map-wrap {
+        position: relative;
+        background: linear-gradient(180deg, #0b132b, #0b1126);
+      }
+      svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        aspect-ratio: 16/9;
+      }
+      .country {
+        fill: var(--land);
+        stroke: var(--stroke);
+        stroke-width: 0.5;
+        vector-effect: non-scaling-stroke;
+        transition: fill 0.1s ease, opacity 0.1s ease;
+      }
+      .country:hover {
+        filter: brightness(1.1);
+      }
+      .country.is-origin {
+        fill: var(--origin);
+      }
+      .country.is-visited {
+        fill: var(--visited);
+      }
+      .country.is-both {
+        fill: var(--both);
+      }
+
+      .tooltip {
+        position: absolute;
+        pointer-events: none;
+        background: #0a122b;
+        color: var(--text);
+        border: 1px solid rgba(157, 169, 203, 0.25);
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-size: 12px;
+        transform: translate(-50%, -120%);
+        box-shadow: 0 10px 30px rgba(8, 12, 30, 0.35);
+        opacity: 0;
+        transition: opacity 0.08s ease;
+        white-space: nowrap;
+      }
+
+      .footer {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        border-top: 1px solid rgba(157, 169, 203, 0.18);
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .counts {
+        font-variant-numeric: tabular-nums;
+      }
+      .sharebox {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        width: 100%;
+      }
+      .sharebox input {
+        flex: 1 1 auto;
+        min-width: 260px;
+        background: #0b132b;
+        color: var(--text);
+        border: 1px solid rgba(157, 169, 203, 0.18);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 12px;
+        opacity: 0.9;
+      }
+      @media (min-width: 860px) {
+        .sharebox {
+          width: auto;
+        }
+      }
+
+      .visually-hidden {
+        position: absolute !important;
+        height: 1px;
+        width: 1px;
+        overflow: hidden;
+        clip: rect(1px, 1px, 1px, 1px);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Our Family World Map</h1>
+      <p class="subtitle">
+        Highlight the countries we're <strong>from</strong> and those we've
+        <strong>visited</strong>. Click the map (choose a mode), or use the
+        search to add countries. Share a link that encodes our selections.
+      </p>
+    </header>
+
+    <div class="wrap">
+      <div class="panel" role="region" aria-label="Map and controls">
+        <div class="controls">
+          <div class="mode" aria-label="Selection mode">
+            <span class="label">Mode:</span>
+            <div
+              class="seg"
+              role="tablist"
+              aria-label="Select how clicks behave"
+            >
+              <input
+                type="radio"
+                name="mode"
+                id="mode-none"
+                value="none"
+                checked
+              />
+              <label for="mode-none" title="Pan only (no selection)">Pan</label>
+              <input type="radio" name="mode" id="mode-origin" value="origin" />
+              <label
+                for="mode-origin"
+                data-role="origin"
+                title="Click adds/removes 'from'"
+                >From</label
+              >
+              <input
+                type="radio"
+                name="mode"
+                id="mode-visited"
+                value="visited"
+              />
+              <label
+                for="mode-visited"
+                data-role="visited"
+                title="Click adds/removes 'visited'"
+                >Visited</label
+              >
+            </div>
+          </div>
+
+          <div class="search" aria-label="Search and add countries">
+            <input
+              id="country-input"
+              list="countries-list"
+              placeholder="Search country… (type to filter)"
+              autocomplete="off"
+            />
+            <datalist id="countries-list"></datalist>
+            <button
+              class="btn"
+              id="add-origin"
+              title="Add typed country to 'From'"
+            >
+              Add to From
+            </button>
+            <button
+              class="btn"
+              id="add-visited"
+              title="Add typed country to 'Visited'"
+            >
+              Add to Visited
+            </button>
+            <button
+              class="btn secondary"
+              id="clear-all"
+              title="Clear all selections"
+            >
+              Clear
+            </button>
+          </div>
+
+          <div class="legend" aria-label="Legend">
+            <span><i class="sw o"></i>From</span>
+            <span><i class="sw v"></i>Visited</span>
+            <span><i class="sw b"></i>Both</span>
+          </div>
+        </div>
+
+        <div class="map-wrap">
+          <svg
+            id="map"
+            role="img"
+            aria-label="World map"
+            viewBox="0 0 960 540"
+          ></svg>
+          <div
+            id="tooltip"
+            class="tooltip"
+            role="status"
+            aria-live="polite"
+          ></div>
+        </div>
+
+        <div class="footer">
+          <div class="counts" aria-label="Counts">
+            <span id="count-origin">From: 0</span>
+            <span style="margin: 0 8px; opacity: 0.5">|</span>
+            <span id="count-visited">Visited: 0</span>
+          </div>
+          <div class="sharebox">
+            <input id="share-url" readonly title="Shareable link" />
+            <button
+              class="btn"
+              id="share-btn"
+              title="Update the URL with current selection"
+            >
+              Update Link
+            </button>
+            <button class="btn" id="copy-btn" title="Copy link to clipboard">
+              Copy
+            </button>
+            <button
+              class="btn secondary"
+              id="export-btn"
+              title="Download selections as JSON"
+            >
+              Export JSON
+            </button>
+            <button
+              class="btn secondary"
+              id="import-btn"
+              title="Import selections from JSON"
+            >
+              Import JSON
+            </button>
+            <input
+              class="visually-hidden"
+              type="file"
+              id="import-file"
+              accept="application/json"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+
+    <script>
+      (function () {
+        const svg = d3.select("#map");
+        const g = svg.append("g");
+        const tooltip = document.getElementById("tooltip");
+
+        const projection = d3.geoNaturalEarth1().rotate([0, 0]).precision(0.1);
+        const path = d3.geoPath(projection);
+
+        const state = { origin: new Set(), visited: new Set() };
+        let countries = []; // GeoJSON features
+        let idToName = new Map();
+        let nameToId = new Map();
+
+        // Zoom & pan
+        const zoom = d3
+          .zoom()
+          .scaleExtent([1, 6])
+          .on("zoom", (event) => g.attr("transform", event.transform));
+        svg.call(zoom);
+
+        const $share = document.getElementById("share-url");
+        const $addOrigin = document.getElementById("add-origin");
+        const $addVisited = document.getElementById("add-visited");
+        const $clear = document.getElementById("clear-all");
+        const $input = document.getElementById("country-input");
+        const $datalist = document.getElementById("countries-list");
+        const $countO = document.getElementById("count-origin");
+        const $countV = document.getElementById("count-visited");
+        const $shareBtn = document.getElementById("share-btn");
+        const $copyBtn = document.getElementById("copy-btn");
+        const $exportBtn = document.getElementById("export-btn");
+        const $importBtn = document.getElementById("import-btn");
+        const $importFile = document.getElementById("import-file");
+
+        function currentMode() {
+          return document.querySelector('input[name="mode"]:checked').value; // 'none' | 'origin' | 'visited'
+        }
+
+        function b64urlEncode(str) {
+          return btoa(str)
+            .replaceAll("+", "-")
+            .replaceAll("/", "_")
+            .replaceAll("=", "");
+        }
+        function b64urlDecode(str) {
+          str = str.replaceAll("-", "+").replaceAll("_", "/");
+          while (str.length % 4) str += "=";
+          return atob(str);
+        }
+
+        function idArray(set) {
+          return Array.from(set.values()).sort((a, b) => a - b);
+        }
+
+        function updateCounts() {
+          $countO.textContent = `From: ${state.origin.size}`;
+          $countV.textContent = `Visited: ${state.visited.size}`;
+        }
+
+        function updateShareUrl() {
+          const data = { o: idArray(state.origin), v: idArray(state.visited) };
+          const enc = b64urlEncode(JSON.stringify(data));
+          const url = `${location.origin}${location.pathname}#${enc}`;
+          $share.value = url;
+          history.replaceState(null, "", "#" + enc);
+        }
+
+        function restoreFromHash() {
+          const h = location.hash.replace(/^#/, "");
+          if (!h) return;
+          try {
+            const obj = JSON.parse(b64urlDecode(h));
+            state.origin = new Set((obj.o || []).map(Number));
+            state.visited = new Set((obj.v || []).map(Number));
+          } catch (e) {
+            console.warn("Bad hash payload");
+          }
+        }
+
+        function addByName(name, bucket) {
+          if (!name) return;
+          const id = nameToId.get(name.trim().toLowerCase());
+          if (id == null) {
+            alert(
+              'No exact match for "' + name + '". Choose from the suggestions.'
+            );
+            return;
+          }
+          toggle(id, bucket, true);
+        }
+
+        function toggle(id, bucket, forceOn) {
+          const set = bucket === "origin" ? state.origin : state.visited;
+          if (forceOn) {
+            set.add(id);
+          } else {
+            set.has(id) ? set.delete(id) : set.add(id);
+          }
+          paint();
+          updateCounts();
+          updateShareUrl();
+        }
+
+        function paint() {
+          g.selectAll("path.country").each(function (d) {
+            const id = d.id;
+            const o = state.origin.has(id);
+            const v = state.visited.has(id);
+            this.classList.toggle("is-origin", o && !v);
+            this.classList.toggle("is-visited", v && !o);
+            this.classList.toggle("is-both", o && v);
+          });
+        }
+
+        function render() {
+          g.selectAll("path").remove();
+          g.append("path")
+            .attr("class", "sphere")
+            .attr("d", path({ type: "Sphere" }))
+            .attr("fill", "#0a122b")
+            .attr("stroke", "transparent");
+
+          g.selectAll("path.country")
+            .data(countries)
+            .enter()
+            .append("path")
+            .attr("class", "country")
+            .attr("d", path)
+            .attr("data-id", (d) => d.id)
+            .attr("tabindex", 0)
+            .on("click", (event, d) => {
+              const mode = currentMode();
+              if (mode === "none") return; // pan only
+              toggle(d.id, mode);
+            })
+            .on("mousemove", (event, d) => {
+              const name = idToName.get(d.id) || "Unknown";
+              tooltip.textContent = name;
+              const r = svg.node().getBoundingClientRect();
+              tooltip.style.left = event.clientX - r.left + "px";
+              tooltip.style.top = event.clientY - r.top + "px";
+              tooltip.style.opacity = 1;
+            })
+            .on("mouseleave", () => {
+              tooltip.style.opacity = 0;
+            });
+
+          paint();
+        }
+
+        async function boot() {
+          const [atlas, tsv] = await Promise.all([
+            fetch(
+              "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"
+            ).then((r) => r.json()),
+            fetch(
+              "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.tsv"
+            ).then((r) => r.text()),
+          ]);
+          const geo = topojson.feature(atlas, atlas.objects.countries);
+          countries = geo.features;
+
+          // Build name lookups
+          const rows = d3.tsvParse(tsv); // columns: id, name
+          rows.forEach((r) => {
+            const id = +r.id;
+            const nm = r.name;
+            idToName.set(id, nm);
+            nameToId.set(nm.toLowerCase(), id);
+          });
+
+          // Populate datalist for search
+          const frag = document.createDocumentFragment();
+          Array.from(rows)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach((r) => {
+              const opt = document.createElement("option");
+              opt.value = r.name;
+              frag.appendChild(opt);
+            });
+          $datalist.appendChild(frag);
+
+          restoreFromHash();
+          render();
+          updateCounts();
+          updateShareUrl();
+        }
+
+        // UI wiring
+        $addOrigin.addEventListener("click", () => {
+          addByName($input.value, "origin");
+        });
+        $addVisited.addEventListener("click", () => {
+          addByName($input.value, "visited");
+        });
+        $clear.addEventListener("click", () => {
+          if (confirm("Clear all selections?")) {
+            state.origin.clear();
+            state.visited.clear();
+            paint();
+            updateCounts();
+            updateShareUrl();
+          }
+        });
+        $shareBtn.addEventListener("click", updateShareUrl);
+        $copyBtn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText($share.value);
+            $copyBtn.textContent = "Copied!";
+            setTimeout(() => {
+              $copyBtn.textContent = "Copy";
+            }, 1200);
+          } catch {
+            alert("Copy failed. Select the link and copy manually.");
+          }
+        });
+        $exportBtn.addEventListener("click", () => {
+          const data = {
+            from: idArray(state.origin).map((id) => ({
+              id,
+              name: idToName.get(id),
+            })),
+            visited: idArray(state.visited).map((id) => ({
+              id,
+              name: idToName.get(id),
+            })),
+          };
+          const blob = new Blob([JSON.stringify(data, null, 2)], {
+            type: "application/json",
+          });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "family-world-map.json";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        });
+        $importBtn.addEventListener("click", () => $importFile.click());
+        $importFile.addEventListener("change", async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          try {
+            const text = await file.text();
+            const obj = JSON.parse(text);
+            state.origin.clear();
+            state.visited.clear();
+            (obj.from || []).forEach((x) =>
+              state.origin.add(
+                +x.id || nameToId.get(String(x.name).toLowerCase())
+              )
+            );
+            (obj.visited || []).forEach((x) =>
+              state.visited.add(
+                +x.id || nameToId.get(String(x.name).toLowerCase())
+              )
+            );
+            paint();
+            updateCounts();
+            updateShareUrl();
+          } catch (err) {
+            alert("Could not import this file.");
+          }
+          e.target.value = "";
+        });
+
+        // Keyboard: Enter in search adds to current non-pan mode, else to visited
+        $input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const mode = currentMode();
+            addByName($input.value, mode === "none" ? "visited" : mode);
+          }
+        });
+
+        // Resize preserves viewBox; D3 zoom handles scaling
+        window.addEventListener("hashchange", () => {
+          restoreFromHash();
+          paint();
+          updateCounts();
+          updateShareUrl();
+        });
+
+        // Start
+        boot();
+      })();
+    </script>
+  </body>
+</html>
