@@ -108,6 +108,7 @@
         width: 100vw;
         position: relative;
         z-index: 1;
+        background: #000000;
       }
 
       /* Description panel in bottom-right */
@@ -225,37 +226,35 @@
 
       const relatives = [
         {
-          name: "Alice Novak",
+          name: "Tim (Dad)",
           places: [
-            { name: "Vienna, Austria (born)", lat: 48.2082, lng: 16.3738 },
-            { name: "Melbourne, Australia", lat: -37.8136, lng: 144.9631 },
+            { name: "Guildford, United Kingdom", lat: 51.2357, lng: -0.5621 },
+            { name: "Auckland, New Zealand", lat: -36.8485, lng: 174.7633 },
+            { name: "Oxford, United Kingdom", lat: 51.752, lng: -1.2577 },
             { name: "Sydney, Australia", lat: -33.8688, lng: 151.2093 },
           ],
-          description: `Alice was born in Vienna in 1932. After the war, she emigrated to Australia for work
-        and community, first settling in Melbourne before moving to Sydney for university research.
-        The move opened up new opportunities and a bigger family network.`,
+          description: `Dad was born in the UK, moved to New Zealand with his family when he was 3 beacuse his father got a job in a timber mill. He then moved to Oxford to study a PhD in neuroscience. and married my mum in 2010 and finally to Sydney.`,
         },
         {
-          name: "Mateo García",
+          name: "Julia (Mum)",
           places: [
-            { name: "Bogotá, Colombia (born)", lat: 4.711, lng: -74.0721 },
-            { name: "Madrid, Spain", lat: 40.4168, lng: -3.7038 },
-            { name: "Toronto, Canada", lat: 43.6532, lng: -79.3832 },
-            { name: "New York, USA", lat: 40.7128, lng: -74.006 },
+            { name: "Sacromento, United States", lat: 39.7138, lng: -121.7913 },
+            { name: "Tackley, United Kingdom", lat: 51.2357, lng: -0.5621 },
+            { name: "Auckland, New Zealand", lat: -36.8485, lng: 174.7633 },
+            { name: "Oxford, United Kingdom", lat: 51.752, lng: -1.2577 },
+            { name: "Sydney, Australia", lat: -33.8688, lng: 151.2093 },
           ],
-          description: `Mateo left Bogotá in 1989 to study engineering in Madrid. He later moved to Toronto
-        to join a startup, and eventually to New York as the company expanded. Each move broadened his
-        perspective and career.`,
+          description: `Mum was born in Sacramento, California, and moved to Tackley, United Kingdom when she was 3. .`,
         },
         {
-          name: "Yuki Tanaka",
+          name: "Papa (Grandfather)",
           places: [
-            { name: "Sapporo, Japan (born)", lat: 43.0618, lng: 141.3545 },
-            { name: "Osaka, Japan", lat: 34.6937, lng: 135.5023 },
-            { name: "San Francisco, USA", lat: 37.7749, lng: -122.4194 },
+            { name: "Esher, United Kingdom", lat: 51.2357, lng: -0.5621 },
+            { name: "Auckland, New Zealand", lat: -36.8485, lng: 174.7633 },
+            { name: "London, United Kingdom", lat: 51.5074, lng: -0.1278 },
+            { name: "Auckland, New Zealand", lat: -36.8485, lng: 174.7633 },
           ],
-          description: `Yuki moved from Sapporo to Osaka for culinary training, then to San Francisco to open
-        a family restaurant. The journey blended traditions and sparked a passion for teaching.`,
+          description: `Papa was born near London. He moved to New Zealand when he was only 18 on a ship because he wanted to be a farmer. He eventually moved back to London and then back to New Zealand for a job in a timber mill.`,
         },
       ];
 
@@ -271,6 +270,9 @@
         ],
         maxBoundsViscosity: 1.0,
         minZoom: 1,
+        maxZoom: 18,
+        bounceAtZoomLimits: false,
+        wheelPxPerZoomLevel: 60,
       });
 
       // Satellite basemap
@@ -279,7 +281,12 @@
         {
           attribution:
             '&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-          maxZoom: 19,
+          maxZoom: 18,
+          noWrap: true,
+          bounds: [
+            [-85, -180],
+            [85, 180],
+          ],
         }
       ).addTo(map);
 
@@ -294,6 +301,24 @@
         if (bounds.getWest() < -180 || bounds.getEast() > 180) {
           const newLng = Math.max(-180, Math.min(180, center.lng));
           map.setView([center.lat, newLng], map.getZoom(), { animate: false });
+        }
+      });
+
+      // Additional bounds checking on zoom and move events
+      map.on("zoomend moveend", function () {
+        const center = map.getCenter();
+        const bounds = map.getBounds();
+
+        // Ensure longitude stays within world bounds
+        if (center.lng < -180 || center.lng > 180) {
+          const newLng = Math.max(-180, Math.min(180, center.lng));
+          map.setView([center.lat, newLng], map.getZoom(), { animate: false });
+        }
+
+        // Ensure latitude stays within reasonable bounds
+        if (center.lat < -85 || center.lat > 85) {
+          const newLat = Math.max(-85, Math.min(85, center.lat));
+          map.setView([newLat, center.lng], map.getZoom(), { animate: false });
         }
       });
 
